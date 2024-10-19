@@ -63,7 +63,7 @@ xxx-StorageClass    xxx-Provider   Delete          Immediate              true  
 ```
 2. 修改 [with-pv.yaml](https://github.com/vmware-tanzu/velero/blob/v1.5.1/examples/nginx-app/with-pv.yaml) 文件中的 PVC 资源清单，使用集群中存储类名为 “xxx-StorageClass” 的存储类来动态创建。示例如下：
 <dx-codeblock>
-:::  yaml
+```yaml
 ...
 ---
 kind: PersistentVolumeClaim
@@ -82,9 +82,12 @@ spec:
     requests: 
       storage: 20Gi # 由于该云平台限制存储最小为20Gi，本示例需要同步修改此值为20Gi
 ... 
-:::
+```
+
 </dx-codeblock>
+
 3. 执行以下命令，应用示例中的 with-pv.yaml，创建如下的集群资源（nginx-example 命名空间）。示例如下：
+
 ```bash
 $ kubectl apply -f with-pv.yaml 
 namespace/nginx-example created
@@ -92,9 +95,10 @@ persistentvolumeclaim/nginx-logs created
 deployment.apps/nginx-deployment created
 service/my-nginx created
 ```
+
 4. 创建的 PVC “nginx-logs” 已挂载至 Nginx 容器的 `/var/log/nginx` 目录，作为服务的日志存储。本文示例通过在浏览器测试访问 Nginx 服务，为挂载的 PVC 生产日志数据，以便后续还原后进行数据比对。示例如下：
 <dx-codeblock>
-:::  bash
+```bash
 $ kubectl exec -it nginx-deployment-5ccc99bffb-6nm5w bash -n nginx-example
 kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl kubectl exec [POD] -- [COMMAND]
 Defaulting container name to nginx.
@@ -111,7 +115,7 @@ $ head -n 2 /var/log/nginx/access.log
 $ head -n 2 /var/log/nginx/error.log 
 2020/12/29 03:02:32 [error] 6#6: *597 open() "/usr/share/nginx/html/favicon.ico" failed (2: No such file or directory), client: 192.168.0.73, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "47.242.233.22", referrer: "http://47.242.233.22/?spm=5176.2020520152.0.0.22d016ddHXZumX"
 2020/12/29 03:07:21 [error] 6#6: *1172 open() "/usr/share/nginx/html/0bef" failed (2: No such file or directory), client: 192.168.0.73, server: localhost, request: "GET /0bef HTTP/1.0"
-:::
+```
 </dx-codeblock>
 
 
