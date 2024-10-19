@@ -63,6 +63,7 @@ xxx-StorageClass    xxx-Provider   Delete          Immediate              true  
 ```
 2. 修改 [with-pv.yaml](https://github.com/vmware-tanzu/velero/blob/v1.5.1/examples/nginx-app/with-pv.yaml) 文件中的 PVC 资源清单，使用集群中存储类名为 “xxx-StorageClass” 的存储类来动态创建。示例如下：
 <dx-codeblock>
+
 ```yaml
 ...
 ---
@@ -98,6 +99,7 @@ service/my-nginx created
 
 4. 创建的 PVC “nginx-logs” 已挂载至 Nginx 容器的 `/var/log/nginx` 目录，作为服务的日志存储。本文示例通过在浏览器测试访问 Nginx 服务，为挂载的 PVC 生产日志数据，以便后续还原后进行数据比对。示例如下：
 <dx-codeblock>
+
 ```bash
 $ kubectl exec -it nginx-deployment-5ccc99bffb-6nm5w bash -n nginx-example
 kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl kubectl exec [POD] -- [COMMAND]
@@ -116,6 +118,7 @@ $ head -n 2 /var/log/nginx/error.log
 2020/12/29 03:02:32 [error] 6#6: *597 open() "/usr/share/nginx/html/favicon.ico" failed (2: No such file or directory), client: 192.168.0.73, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "47.242.233.22", referrer: "http://47.242.233.22/?spm=5176.2020520152.0.0.22d016ddHXZumX"
 2020/12/29 03:07:21 [error] 6#6: *1172 open() "/usr/share/nginx/html/0bef" failed (2: No such file or directory), client: 192.168.0.73, server: localhost, request: "GET /0bef HTTP/1.0"
 ```
+
 </dx-codeblock>
 
 
@@ -138,7 +141,8 @@ kubectl api-resources --verbs=list -o name  | xargs -n 1 kubectl get --show-kind
 		 ```
 2. 可以根据实际情况筛选出需要被迁移的资源清单。本文示例将直接从该云平台迁移 “nginx-example” 命名空间下 Nginx 工作负载相关的资源到容器服务 TKE，涉及资源如下所示：
 <dx-codeblock>
-:::  bash
+
+```  bash
 $ kubectl  get all -n nginx-example
 NAME                                    READY   STATUS    RESTARTS   AGE
 pod/nginx-deployment-5ccc99bffb-tn2sh   2/2     Running   0          2d19h
@@ -159,7 +163,9 @@ nginx-logs   Bound    d-j6ccrq4k1moziu1l6l5r   20Gi       RWO            xxx-Sto
 $ kubectl  get pv
 NAME                     CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                      STORAGECLASS              REASON   AGE
 d-j6ccrq4k1moziu1l6l5r   20Gi       RWO            Delete           Bound    nginx-example/nginx-logs   xxx-StorageClass            2d19h
-:::
+
+```
+
 </dx-codeblock>
 
 
