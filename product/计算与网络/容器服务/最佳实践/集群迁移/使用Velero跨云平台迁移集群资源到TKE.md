@@ -126,19 +126,25 @@ $ head -n 2 /var/log/nginx/error.log
 
 ### 确认需要迁移的资源清单
 
-1. 执行以下命令，输出集群 A 中所有的资源清单列表。  
+1. 执行以下命令，输出集群 A 中所有的资源清单列表。
+    
 ```bash
 kubectl api-resources --verbs=list -o name  | xargs -n 1 kubectl get --show-kind --ignore-not-found --all-namespaces
 ```
+
  您也可以执行以下命令，根据资源区分命名空间，缩小输出的资源范围：
 	- 查看不区分命名空间的资源清单列表：
-		 ```bash
+ 
+```bash
 		 kubectl api-resources --namespaced=false --verbs=list -o name | xargs -n 1 kubectl get --show-kind --ignore-not-found
-		 ```
+```
+   
 	- 查看区分命名空间的资源清单列表：
-		 ```bash
+ 
+```bash
 		 kubectl api-resources --namespaced=true --verbs=list -o name | xargs -n 1 kubectl get --show-kind --ignore-not-found --all-namespaces
-		 ```
+```
+   
 2. 可以根据实际情况筛选出需要被迁移的资源清单。本文示例将直接从该云平台迁移 “nginx-example” 命名空间下 Nginx 工作负载相关的资源到容器服务 TKE，涉及资源如下所示：
 <dx-codeblock>
 
@@ -174,8 +180,10 @@ d-j6ccrq4k1moziu1l6l5r   20Gi       RWO            Delete           Bound    ngi
 ### 确认 Hook 策略
 
 本文示例在 [with-pv.yaml](https://github.com/vmware-tanzu/velero/blob/v1.5.1/examples/nginx-app/with-pv.yaml) 中已配置“备份 Nginx 工作负载前将文件系统设置为只读，在备份后恢复读写”的 Hook 策略，YAML 文件如下所示：
+
 <dx-codeblock>
-:::  yaml
+	
+```  yaml
 ...
       annotations: 
         # 备份 Hook 策略的注解表示：在开始备份之前将 nginx 日志目录设置为只读模式，备份完成后恢复读写模式
@@ -205,7 +213,7 @@ d-j6ccrq4k1moziu1l6l5r   20Gi       RWO            Delete           Bound    ngi
           - mountPath: "/var/log/nginx"
             name: nginx-logs
  ...
-:::
+```
 </dx-codeblock>
 
 
@@ -220,9 +228,11 @@ d-j6ccrq4k1moziu1l6l5r   20Gi       RWO            Delete           Bound    ngi
 
 #### 在集群 A 执行备份
 
-1. 创建如下 YAML 文件，备份需要迁移的资源。  
+1. 创建如下 YAML 文件，备份需要迁移的资源。
+   
 <dx-codeblock>
-:::  yaml
+
+```  yaml
 apiVersion: velero.io/v1
 kind: Backup
 metadata: 
@@ -242,9 +252,11 @@ spec:
     - default 
   # 使用 restic 备份卷
   defaultVolumesToRestic: true
-:::
+```
+
 </dx-codeblock>
 2. 执行备份过程如下所示，当备份状态为 “Completed” 且 errors 数为0时表示备份过程完整无误。示例如下：
+
 ```bash
 $ kubectl apply -f backup.yaml 
 backup.velero.io/migrate-backup created
@@ -255,10 +267,12 @@ $ velero backup get
 NAME             STATUS      ERRORS   WARNINGS   CREATED                EXPIRES   STORAGE LOCATION   SELECTOR
 migrate-backup   Completed   0        0          2020-12-29 19:24:28 +0800 CST   29d    default     <none>
 ```
+
 3. 备份完成后执行以下命令，将备份存储位置临时更新为只读模式。示例如下：
 <dx-alert infotype="explain" title=" ">
 非必须，可以防止在还原过程时， Velero 在备份存储位置中创建或删除备份对象。  
 </dx-alert>
+
 ```bash
 kubectl patch backupstoragelocation default --namespace velero \
     --type merge \
@@ -271,7 +285,7 @@ kubectl patch backupstoragelocation default --namespace velero \
 
 1. 由于使用的动态存储类存在差异，需要通过如下所示的 ConfigMap 为持久卷 “nginx-logs” 创建动态存储类名映射。示例如下：
 <dx-codeblock>
-:::  yaml
+```  yaml
 apiVersion: v1
 kind: ConfigMap
 metadata: 
@@ -283,14 +297,17 @@ metadata:
 data: 
   # 存储类名映射到腾讯云动态存储类 cbs
   xxx-StorageClass: cbs
-:::
+```
 </dx-codeblock>
 2. 执行以下命令，应用上述的 ConfigMap 配置。示例如下：
+
 ```bash
 $ kubectl  apply -f cm-storage-class.yaml 
 configmap/change-storage-class-config created
 ```
+
 3. Velero 备份的资源清单以 JSON 格式存放在对象存储 COS 中，如有更加个性化的迁移需求，可以直接下载备份文件并自定义修改。本示例将为 Nginx 的 Deployment 资源自定义添加一个 “jokey-test:jokey-test” 注解，修改过程如下：
+   
 ```bash
 $ Downloads % mkdir migrate-backup
 # 解压备份文件
@@ -309,6 +326,7 @@ $ migrate-backup % tar -zcvf migrate-backup.tar.gz *
 
 1. 本文示例使用如下所示的资源清单执行还原操作（迁移）：
 <dx-codeblock>
+
 :::  yaml
 apiVersion: velero.io/v1
 kind: Restore
@@ -340,8 +358,10 @@ spec:
     nginx-example: default
   restorePVs: true
 :::
+
 </dx-codeblock>
 2. 执行还原过程如下所示，当还原状态显示为 “Completed” 且 “errors” 数为0时表示还原过程完整无误。示例如下：
+
 ```bash
 $ kubectl  apply -f restore.yaml 
 restore.velero.io/migrate-restore created
