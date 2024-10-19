@@ -232,7 +232,7 @@ d-j6ccrq4k1moziu1l6l5r   20Gi       RWO            Delete           Bound    ngi
    
 <dx-codeblock>
 
-```  yaml
+```yaml
 apiVersion: velero.io/v1
 kind: Backup
 metadata: 
@@ -252,6 +252,7 @@ spec:
     - default 
   # 使用 restic 备份卷
   defaultVolumesToRestic: true
+
 ```
 
 </dx-codeblock>
@@ -285,6 +286,7 @@ kubectl patch backupstoragelocation default --namespace velero \
 
 1. 由于使用的动态存储类存在差异，需要通过如下所示的 ConfigMap 为持久卷 “nginx-logs” 创建动态存储类名映射。示例如下：
 <dx-codeblock>
+
 ```  yaml
 apiVersion: v1
 kind: ConfigMap
@@ -297,7 +299,9 @@ metadata:
 data: 
   # 存储类名映射到腾讯云动态存储类 cbs
   xxx-StorageClass: cbs
+
 ```
+
 </dx-codeblock>
 2. 执行以下命令，应用上述的 ConfigMap 配置。示例如下：
 
@@ -327,7 +331,7 @@ $ migrate-backup % tar -zcvf migrate-backup.tar.gz *
 1. 本文示例使用如下所示的资源清单执行还原操作（迁移）：
 <dx-codeblock>
 
-:::  yaml
+```  yaml
 apiVersion: velero.io/v1
 kind: Restore
 metadata: 
@@ -357,7 +361,7 @@ spec:
   namespaceMapping: 
     nginx-example: default
   restorePVs: true
-:::
+```
 
 </dx-codeblock>
 2. 执行还原过程如下所示，当还原状态显示为 “Completed” 且 “errors” 数为0时表示还原过程完整无误。示例如下：
@@ -394,6 +398,7 @@ replicaset.apps/nginx-deployment-5ccc99bffb   1         1         1       49s
  从命令执行结果可以查看出被迁移的资源的运行状态正常。  
 2. 核查设置的还原策略是否成功。  
  1. 执行以下命令，核查动态存储类名映射是否正确。示例如下：
+    
  ```bash
  # 可以看到 PVC/PV 的存储类已经是 "cbs"，说明存储类映射成功
 $ kubectl  get pvc -n default 
@@ -405,6 +410,7 @@ $ kubectl  get pv
  ```
 		 若 PVC/PV 的存储类为 “cbs”，则说明存储类映射成功。从上述命令执行结果可以查看出存储类映射成功。  
  2. 执行以下命令，查看还原前为 “deployment.apps/nginx-deployment” 自定义添加的 “jokey-test” 注解是否成功。示例如下：
+    
 ```bash
 # 获取注解 “jokey-test” 成功，说明自定义修改资源成功。  
 $ kubectl  get deployment.apps/nginx-deployment -o custom-columns=annotations:.metadata.annotations.jokey-test
@@ -414,7 +420,8 @@ jokey-test
      若可以正常获取注解，则说明成功修改自定义资源。从上述命令执行结果可以查看出命名空间映射配置成功。  
 3. 执行以下命令，检查工作负载挂载的 PVC 数据是否成功迁移。  
 <dx-codeblock>
-:::  bash
+
+```bash
 # 查看挂载的 PVC 数据目录中的数据大小，显示为88K，比迁移前多，原因是腾讯云 CLB 主动发起健康检查产生了一些日志   
 $ kubectl  exec -it nginx-deployment-5ccc99bffb-6nm5w -n default -- bash
 Defaulting container name to nginx.
@@ -431,7 +438,8 @@ $ head -n 2 /var/log/nginx/access.log
 $ head -n 2 /var/log/nginx/error.log 
 2020/12/29 03:02:32 [error] 6#6: *597 open() "/usr/share/nginx/html/favicon.ico" failed (2: No such file or directory), client: 192.168.0.73, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "47.242.233.22", referrer: "http://47.242.233.22/?spm=5176.2020520152.0.0.22d016ddHXZumX"
 2020/12/29 03:07:21 [error] 6#6: *1172 open() "/usr/share/nginx/html/0bef" failed (2: No such file or directory), client: 192.168.0.73, server: localhost, request: "GET /0bef HTTP/1.0"
-:::
+```
+
 </dx-codeblock>
  从上述命令结果可以查看出，工作负载挂载的 PVC 数据成功迁移。至此，本文示例成功迁移某云平台集群 A 的 Nginx （ nginx-example 命名空间）工作负载相关资源和数据到容器服务 TKE 集群 B （default 命名空间）中。  
 
